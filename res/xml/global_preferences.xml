@@ -270,6 +270,13 @@
             android:entries="@array/background_ops_entries"
             android:entryValues="@array/background_ops_values"
             android:dialogTitle="@string/background_ops_label" />
+            
+       <CheckBoxPreference
+            android:persistent="false"
+            android:key="use_orbot"
+            android:title="@string/global_settings_use_orbot_title"
+            android:summary="@string/global_settings_use_orbot_summary"/>
+            
 
     </PreferenceScreen>
 
@@ -299,7 +306,8 @@
             android:key="privacy_mode"
             android:title="@string/global_settings_privacy_mode_title"
             android:summary="@string/global_settings_privacy_mode_summary"/>
-
+            
+       
     </PreferenceScreen>
 
     <PreferenceScreen
