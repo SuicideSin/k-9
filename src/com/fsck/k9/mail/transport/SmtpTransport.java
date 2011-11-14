@@ -1,32 +1,51 @@
 
 package com.fsck.k9.mail.transport;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManager;
+
 import android.util.Log;
+
 import com.fsck.k9.K9;
-import com.fsck.k9.mail.*;
+import com.fsck.k9.mail.Address;
+import com.fsck.k9.mail.Authentication;
+import com.fsck.k9.mail.AuthenticationFailedException;
+import com.fsck.k9.mail.CertificateValidationException;
+import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
+import com.fsck.k9.mail.MessagingException;
+import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.filter.Base64;
 import com.fsck.k9.mail.filter.EOLConvertingOutputStream;
 import com.fsck.k9.mail.filter.LineWrapOutputStream;
 import com.fsck.k9.mail.filter.PeekableInputStream;
 import com.fsck.k9.mail.filter.SmtpDataStuffing;
 import com.fsck.k9.mail.internet.MimeUtility;
-import com.fsck.k9.mail.store.TrustManagerFactory;
 import com.fsck.k9.mail.store.LocalStore.LocalMessage;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManager;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.*;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-
-import java.util.*;
+import com.fsck.k9.mail.store.TrustManagerFactory;
 
 public class SmtpTransport extends Transport {
     public static final int CONNECTION_SECURITY_NONE = 0;
@@ -70,6 +89,7 @@ public class SmtpTransport extends Transport {
 
     private int mLargestAcceptableMessage;
 
+    
     /**
      * smtp://user:password@server:port CONNECTION_SECURITY_NONE
      * smtp+tls://user:password@server:port CONNECTION_SECURITY_TLS_OPTIONAL
@@ -128,15 +148,19 @@ public class SmtpTransport extends Transport {
                 Log.e(K9.LOG_TAG, "Couldn't urldecode username or password.", enc);
             }
         }
+        
     }
 
     @Override
     public void open() throws MessagingException {
+    	
+    	
+    	
         try {
             InetAddress[] addresses = InetAddress.getAllByName(mHost);
             for (int i = 0; i < addresses.length; i++) {
                 try {
-                    SocketAddress socketAddress = new InetSocketAddress(addresses[i], mPort);
+                	InetSocketAddress socketAddress = new InetSocketAddress(addresses[i], mPort);
                     if (mConnectionSecurity == CONNECTION_SECURITY_SSL_REQUIRED ||
                             mConnectionSecurity == CONNECTION_SECURITY_SSL_OPTIONAL) {
                         SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -144,13 +168,26 @@ public class SmtpTransport extends Transport {
                         sslContext.init(null, new TrustManager[] {
                                             TrustManagerFactory.get(mHost, secure)
                                         }, new SecureRandom());
-                        mSocket = sslContext.getSocketFactory().createSocket();
+                        mSocket = sslContext.getSocketFactory().createSocket();  
+                        
+                        if (K9.getProxyManager() != null)
+                        {
+                        	if (K9.DEBUG)
+                                Log.i(K9.LOG_TAG, "SmtpTransport connecting to proxy");
+
+                        	K9.getProxyManager().connectSocketToProxy(mSocket, socketAddress);
+                        }
+                        
                         mSocket.connect(socketAddress, SOCKET_CONNECT_TIMEOUT);
                         mSecure = true;
                     } else {
                         mSocket = new Socket();
                         mSocket.connect(socketAddress, SOCKET_CONNECT_TIMEOUT);
                     }
+                    
+
+                    
+                    
                 } catch (ConnectException e) {
                     if (i < (addresses.length - 1)) {
                         // there are still other addresses for that host to try
