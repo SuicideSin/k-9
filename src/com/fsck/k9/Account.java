@@ -1,6 +1,18 @@
 
 package com.fsck.k9;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -17,18 +29,6 @@ import com.fsck.k9.mail.store.LocalStore;
 import com.fsck.k9.mail.store.StorageManager;
 import com.fsck.k9.mail.store.StorageManager.StorageProvider;
 import com.fsck.k9.view.ColorChip;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Account stores all of the settings for a single account defined by the user. It is able to save
@@ -1045,7 +1045,7 @@ public class Account implements BaseAccount {
     }
 
     public LocalStore getLocalStore() throws MessagingException {
-        return Store.getLocalInstance(this, K9.app);
+        return Store.getLocalInstance(this, K9.app, K9.getPasscode());
     }
 
     public Store getRemoteStore() throws MessagingException {

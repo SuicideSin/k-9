@@ -17,6 +17,7 @@
 package com.fsck.k9.activity;
 
 import java.util.ArrayList;
+
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.text.Html;

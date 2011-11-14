@@ -1,12 +1,13 @@
 package com.fsck.k9.mail.store;
 
+import info.guardianproject.database.sqlcipher.SQLiteDatabase;
+
 import java.io.File;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import android.app.Application;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.util.Log;
 
@@ -96,7 +97,7 @@ public class LockableDatabase {
             }
 
             try {
-                openOrCreateDataspace(mApplication);
+                openOrCreateDataspace(mApplication, mPasscode);
             } catch (UnavailableStorageException e) {
                 Log.e(K9.LOG_TAG, "Unable to open DB on mount", e);
             }
@@ -105,6 +106,9 @@ public class LockableDatabase {
 
     private String mStorageProviderId;
 
+    /** for SQLCipher secured storage **/
+    private String mPasscode;
+    
     private SQLiteDatabase mDb;
     /**
      * Reentrant read lock
@@ -146,10 +150,11 @@ public class LockableDatabase {
      * @param schemaDefinition
      *            Never <code>null</code
      */
-    public LockableDatabase(final Application application, final String uUid, final SchemaDefinition schemaDefinition) {
+    public LockableDatabase(final Application application, final String uUid, final SchemaDefinition schemaDefinition, final String passcode) {
         this.mApplication = application;
         this.uUid = uUid;
         this.mSchemaDefinition = schemaDefinition;
+        this.mPasscode = passcode;
     }
 
     public void setStorageProviderId(String mStorageProviderId) {
@@ -340,7 +345,7 @@ public class LockableDatabase {
                 mStorageProviderId = newProviderId;
 
                 // re-initialize this class with the new Uri
-                openOrCreateDataspace(mApplication);
+                openOrCreateDataspace(mApplication, mPasscode);
             } finally {
                 unlockWrite(newProviderId);
             }
@@ -352,7 +357,7 @@ public class LockableDatabase {
     public void open() throws UnavailableStorageException {
         lockWrite();
         try {
-            openOrCreateDataspace(mApplication);
+            openOrCreateDataspace(mApplication, mPasscode);
         } finally {
             unlockWrite();
         }
@@ -364,18 +369,18 @@ public class LockableDatabase {
      * @param application
      * @throws UnavailableStorageException
      */
-    protected void openOrCreateDataspace(final Application application) throws UnavailableStorageException {
+    protected void openOrCreateDataspace(final Application application, String passcode) throws UnavailableStorageException {
 
         lockWrite();
         try {
             final File databaseFile = prepareStorage(mStorageProviderId);
             try {
-                mDb = SQLiteDatabase.openOrCreateDatabase(databaseFile, null);
+                mDb = SQLiteDatabase.openOrCreateDatabase(databaseFile, passcode, null);
             } catch (SQLiteException e) {
                 // try to gracefully handle DB corruption - see issue 2537
                 Log.w(K9.LOG_TAG, "Unable to open DB " + databaseFile + " - removing file and retrying", e);
                 databaseFile.delete();
-                mDb = SQLiteDatabase.openOrCreateDatabase(databaseFile, null);
+                mDb = SQLiteDatabase.openOrCreateDatabase(databaseFile, passcode, null);
             }
             if (mDb.getVersion() != mSchemaDefinition.getVersion()) {
                 mSchemaDefinition.doDbUpgrade(mDb);
@@ -472,7 +477,7 @@ public class LockableDatabase {
             }
 
             if (recreate) {
-                openOrCreateDataspace(mApplication);
+                openOrCreateDataspace(mApplication, mPasscode);
             } else {
                 // stop waiting for mount/unmount events
                 getStorageManager().removeListener(mStorageListener);

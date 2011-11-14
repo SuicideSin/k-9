@@ -1,7 +1,17 @@
 
 package com.fsck.k9.mail.store;
 
-import java.io.*;
+import info.guardianproject.database.sqlcipher.SQLiteDatabase;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +26,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import com.fsck.k9.helper.HtmlConverter;
 import org.apache.commons.io.IOUtils;
 
 import android.app.Application;
@@ -24,7 +33,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.util.Log;
@@ -36,6 +44,7 @@ import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.controller.MessageRemovalListener;
 import com.fsck.k9.controller.MessageRetrievalListener;
+import com.fsck.k9.helper.HtmlConverter;
 import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
@@ -117,9 +126,9 @@ public class LocalStore extends Store implements Serializable {
      * @param application
      * @throws UnavailableStorageException if not {@link StorageProvider#isReady(Context)}
      */
-    public LocalStore(final Account account, final Application application) throws MessagingException {
+    public LocalStore(final Account account, final Application application, final String passcode) throws MessagingException {
         super(account);
-        database = new LockableDatabase(application, account.getUuid(), new StoreSchemaDefinition());
+        database = new LockableDatabase(application, account.getUuid(), new StoreSchemaDefinition(), passcode);
 
         mApplication = application;
         database.setStorageProviderId(account.getLocalStorageProviderId());

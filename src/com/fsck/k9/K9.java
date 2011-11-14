@@ -1,9 +1,12 @@
 
 package com.fsck.k9;
 
+import info.guardianproject.doghouse.ProxyManager;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -185,10 +188,14 @@ public class K9 extends Application {
     private static boolean compactLayouts = false;
     private static String mAttachmentDefaultPath = "";
 
-
     private static boolean useGalleryBugWorkaround = false;
     private static boolean galleryBuggy;
 
+    //the global in memory variable for storing the last entered passcode for SQLCipher
+    private static String mPasscode = "changeme";
+    
+    //the global static proxy manager instance
+    private static ProxyManager mProxyManager;
 
     /**
      * The MIME type(s) of attachments we're willing to view.
@@ -504,6 +511,15 @@ public class K9 extends Application {
         compactLayouts = sprefs.getBoolean("compactLayouts", false);
         mAttachmentDefaultPath = sprefs.getString("attachmentdefaultpath",  Environment.getExternalStorageDirectory().toString());
         fontSizes.load(sprefs);
+        
+        if (sprefs.getBoolean("use_orbot", false))
+        {
+        	try {
+				mProxyManager = new ProxyManager("localhost",9050);
+			} catch (UnknownHostException e) {
+				Log.e(K9.LOG_TAG,"could not setup proxy", e);
+			}
+        }
 
         try {
             setBackgroundOps(BACKGROUND_OPS.valueOf(sprefs.getString("backgroundOperations", "WHEN_CHECKED")));
@@ -1040,5 +1056,20 @@ public class K9 extends Application {
         }
 
         return result;
+    }
+    
+    public static void setPasscode (String passcode)
+    {
+    	mPasscode = passcode;
+    }
+    
+    public static String getPasscode ()
+    {
+    	return mPasscode;
+    }
+    
+    public static ProxyManager getProxyManager ()
+    {
+    	return mProxyManager;
     }
 }

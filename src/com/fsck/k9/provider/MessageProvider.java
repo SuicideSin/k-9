@@ -920,7 +920,7 @@ public class MessageProvider extends ContentProvider {
         // get localstore parameter
         Message msg = null;
         try {
-            Folder lf = LocalStore.getLocalInstance(myAccount, K9.app).getFolder(folderName);
+            Folder lf = LocalStore.getLocalInstance(myAccount, K9.app, K9.getPasscode()).getFolder(folderName);
             int msgCount = lf.getMessageCount();
             if (K9.DEBUG) {
                 Log.d(K9.LOG_TAG, "folder msg count = " + msgCount);

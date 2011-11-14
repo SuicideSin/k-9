@@ -199,7 +199,7 @@ public class Pop3Store extends Store {
             }
 
             try {
-                SocketAddress socketAddress = new InetSocketAddress(mHost, mPort);
+            	InetSocketAddress socketAddress = new InetSocketAddress(mHost, mPort);
                 if (mConnectionSecurity == CONNECTION_SECURITY_SSL_REQUIRED ||
                         mConnectionSecurity == CONNECTION_SECURITY_SSL_OPTIONAL) {
                     SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -208,6 +208,15 @@ public class Pop3Store extends Store {
                                         TrustManagerFactory.get(mHost, secure)
                                     }, new SecureRandom());
                     mSocket = sslContext.getSocketFactory().createSocket();
+                    
+                    if (K9.getProxyManager() != null)
+                    {
+                    	if (K9.DEBUG)
+                            Log.i(K9.LOG_TAG, "SmtpTransport connecting to proxy");
+
+                    	K9.getProxyManager().connectSocketToProxy(mSocket, socketAddress);
+                    }
+                    
                 } else {
                     mSocket = new Socket();
                 }

@@ -1,6 +1,8 @@
 
 package com.fsck.k9.mail.store;
 
+import info.guardianproject.doghouse.ProxyManager;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -11,7 +13,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,6 +44,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -88,8 +91,6 @@ import com.fsck.k9.mail.store.ImapResponseParser.ImapResponse;
 import com.fsck.k9.mail.transport.imap.ImapSettings;
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 
 /**
  * <pre>
@@ -1888,7 +1889,7 @@ public class ImapStore extends Store {
 
             try {
 
-                SocketAddress socketAddress = new InetSocketAddress(mSettings.getHost(), mSettings.getPort());
+            	InetSocketAddress socketAddress = new InetSocketAddress(mSettings.getHost(), mSettings.getPort());
 
                 if (K9.DEBUG)
                     Log.i(K9.LOG_TAG, "Connection " + getLogId() + " connecting to " + mSettings.getHost() + " @ IP addr " + socketAddress);
@@ -1901,11 +1902,22 @@ public class ImapStore extends Store {
                                         TrustManagerFactory.get(mSettings.getHost(), secure)
                                     }, new SecureRandom());
                     mSocket = sslContext.getSocketFactory().createSocket();
+                    
+                    if (K9.getProxyManager() != null)
+                    {
+                    	if (K9.DEBUG)
+                            Log.i(K9.LOG_TAG, "SmtpTransport connecting to proxy");
+
+                    	K9.getProxyManager().connectSocketToProxy(mSocket, socketAddress);
+                    }
+                    
                     mSocket.connect(socketAddress, SOCKET_CONNECT_TIMEOUT);
                 } else {
                     mSocket = new Socket();
                     mSocket.connect(socketAddress, SOCKET_CONNECT_TIMEOUT);
                 }
+                
+                
 
                 setReadTimeout(Store.SOCKET_READ_TIMEOUT);
 

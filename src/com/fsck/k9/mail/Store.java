@@ -1,6 +1,11 @@
 
 package com.fsck.k9.mail;
 
+import info.guardianproject.doghouse.ProxyManager;
+
+import java.util.HashMap;
+import java.util.List;
+
 import android.app.Application;
 import android.content.Context;
 
@@ -8,11 +13,9 @@ import com.fsck.k9.Account;
 import com.fsck.k9.mail.store.ImapStore;
 import com.fsck.k9.mail.store.LocalStore;
 import com.fsck.k9.mail.store.Pop3Store;
-import com.fsck.k9.mail.store.WebDavStore;
 import com.fsck.k9.mail.store.StorageManager.StorageProvider;
-
-import java.util.HashMap;
-import java.util.List;
+import com.fsck.k9.mail.store.UnavailableStorageException;
+import com.fsck.k9.mail.store.WebDavStore;
 
 /**
  * Store is the access point for an email message store. It's location can be
@@ -26,6 +29,8 @@ public abstract class Store {
     protected static final int SOCKET_CONNECT_TIMEOUT = 30000;
     protected static final int SOCKET_READ_TIMEOUT = 60000;
 
+    protected ProxyManager mProxyManager;
+    
     /**
      * Remote stores indexed by Uri.
      */
@@ -39,7 +44,9 @@ public abstract class Store {
 
     protected Store(Account account) {
         mAccount = account;
+       
     }
+    
 
     /**
      * Get an instance of a remote mail store.
@@ -77,10 +84,10 @@ public abstract class Store {
      * Get an instance of a local mail store.
      * @throws UnavailableStorageException if not {@link StorageProvider#isReady(Context)}
      */
-    public synchronized static LocalStore getLocalInstance(Account account, Application application) throws MessagingException {
+    public synchronized static LocalStore getLocalInstance(Account account, Application application, String passcode) throws MessagingException {
         Store store = mLocalStores.get(account.getUuid());
         if (store == null) {
-            store = new LocalStore(account, application);
+            store = new LocalStore(account, application, passcode);
             mLocalStores.put(account.getUuid(), store);
         }
 
