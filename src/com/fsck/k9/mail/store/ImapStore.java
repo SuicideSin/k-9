@@ -1888,7 +1888,7 @@ public class ImapStore extends Store {
 
             try {
 
-                SocketAddress socketAddress = new InetSocketAddress(mSettings.getHost(), mSettings.getPort());
+            	InetSocketAddress socketAddress = new InetSocketAddress(mSettings.getHost(), mSettings.getPort());
 
                 if (K9.DEBUG)
                     Log.i(K9.LOG_TAG, "Connection " + getLogId() + " connecting to " + mSettings.getHost() + " @ IP addr " + socketAddress);
@@ -1901,6 +1901,15 @@ public class ImapStore extends Store {
                                         TrustManagerFactory.get(mSettings.getHost(), secure)
                                     }, new SecureRandom());
                     mSocket = sslContext.getSocketFactory().createSocket();
+                    
+                    if (K9.getProxyManager() != null)
+                    {
+                    	if (K9.DEBUG)
+                            Log.i(K9.LOG_TAG, "SmtpTransport connecting to proxy");
+
+                    	K9.getProxyManager().connectSocketToProxy(mSocket, socketAddress);
+                    }
+                    
                     mSocket.connect(socketAddress, SOCKET_CONNECT_TIMEOUT);
                 } else {
                     mSocket = new Socket();
